@@ -504,7 +504,6 @@ void WebServerManager::setupRoutes() {
       {"/reset_wifi_cred", HTTP_GET, handleWifiReset, this},
       {"/start_config_ap", HTTP_GET, handleStartConfigAP, this},
            // Action endpoints
-      {"/reboot_device", HTTP_POST, handleReboot, this},
       {"/lock_control", HTTP_POST, handleLockControl, this},
 
       // WebSocket
