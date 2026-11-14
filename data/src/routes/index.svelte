@@ -1,62 +1,71 @@
 <script>
 	import HKInfo from '$lib/components/HKInfo.svelte';
 	import { route } from 'sv-router/generated';
-	import { systemInfo } from '$lib/stores/system.svelte.js';
+	import { onMount } from 'svelte';
 
-	let busy = $state('');
-
-	const lockState = $derived(
-		systemInfo.lock_state === 0 ? 'unlock' : systemInfo.lock_state === 1 ? 'lock' : ''
-	);
+	let busyAction = $state(null);
+	let lockState = $state(null); // 'unlock' | 'lock' | null
 
 	async function sendLockAction(action) {
-		if (busy) return;
-		busy = action;
+		if (busyAction) return;
+		busyAction = action;
 		try {
 			const res = await fetch(`/lock_control?action=${action}`, { method: 'POST' });
 			if (res.ok) {
-				systemInfo.lock_state = action === 'unlock' ? 0 : 1;
+				lockState = action;
 			}
 		} catch (e) {
 			console.error(e);
 		} finally {
-			busy = '';
+			busyAction = null;
 		}
 	}
+
+	onMount(() => {
+		const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+		const ws = new WebSocket(`${proto}//${location.host}/ws`);
+		ws.onmessage = (event) => {
+			try {
+				const msg = JSON.parse(event.data);
+				if (msg.type === 'metrics' && typeof msg.lock_state === 'number') {
+					lockState = msg.lock_state === 0 ? 'unlock' : 'lock';
+				}
+			} catch {}
+		};
+		return () => ws.close();
+	});
 </script>
 
-<div class="card bg-base-200 border border-base-300 mb-4">
+<div class="card bg-base-200 shadow-sm border border-base-300 mb-4">
 	<div class="card-body p-4">
-		<div class="flex justify-between w-full">
-			<h2 class="card-title text-lg">Управление замком</h2>
-			<span
-				class="text-sm font-bold"
-				class:text-success={lockState === 'unlock'}
-				class:text-error={lockState === 'lock'}
-			>
-				{lockState === 'unlock' ? 'Открыт' : lockState === 'lock' ? 'Закрыт' : ''}
-			</span>
+		<div class="flex items-center justify-between">
+			<h2 class="card-title text-base">Управление замком</h2>
+			{#if lockState === 'unlock'}
+				<span class="badge badge-success badge-sm">Открыт</span>
+			{:else if lockState === 'lock'}
+				<span class="badge badge-error badge-sm">Закрыт</span>
+			{/if}
 		</div>
 
-		<div class="flex gap-2 mt-2">
+		<div class="grid grid-cols-2 gap-3 mt-2">
 			<button
-				class="btn btn-success flex-1"
-				disabled={busy !== ''}
+				class="btn btn-success {lockState && lockState !== 'unlock' ? 'btn-outline' : ''}"
+				disabled={busyAction !== null}
 				onclick={() => sendLockAction('unlock')}
 			>
-				{#if busy === 'unlock'}
-					<span class="loading loading-spinner"></span>
+				{#if busyAction === 'unlock'}
+					<span class="loading loading-spinner loading-xs"></span>
 				{/if}
 				{lockState === 'unlock' ? '✓ Открыто' : 'Открыть'}
 			</button>
 
 			<button
-				class="btn btn-error flex-1"
-				disabled={busy !== ''}
+				class="btn btn-error {lockState && lockState !== 'lock' ? 'btn-outline' : ''}"
+				disabled={busyAction !== null}
 				onclick={() => sendLockAction('lock')}
 			>
-				{#if busy === 'lock'}
-					<span class="loading loading-spinner"></span>
+				{#if busyAction === 'lock'}
+					<span class="loading loading-spinner loading-xs"></span>
 				{/if}
 				{lockState === 'lock' ? '✓ Закрыто' : 'Закрыть'}
 			</button>
