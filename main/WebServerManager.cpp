@@ -503,10 +503,12 @@ void WebServerManager::setupRoutes() {
       {"/reset_hk_pair", HTTP_GET, handleHKReset, this},
       {"/reset_wifi_cred", HTTP_GET, handleWifiReset, this},
       {"/start_config_ap", HTTP_GET, handleStartConfigAP, this},
-
       // WebSocket
       {"/ws", HTTP_GET, handleWebSocket, this, true},
 
+   // WebSocket
+      {"/ws", HTTP_GET, handleWebSocket, this, true},
+  
       // OTA endpoints
       {"/ota/*", HTTP_POST, handleOTAUpload, this},
 
