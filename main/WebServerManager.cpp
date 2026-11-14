@@ -2405,6 +2405,7 @@ std::string WebServerManager::getDeviceMetrics() {
   status.addNumber("free_heap", esp_get_free_heap_size());
   status.addNumber("wifi_rssi", WiFi.RSSI());
   status.addBool("nfc_connected", m_nfcManager ? m_nfcManager->isConnected() : false);
+  status.addNumber("lock_state", m_lastLockState);
   status.addNumber("nfc_reader_type", m_configManager.getConfig<espConfig::misc_config_t>().nfcReaderType);
   status.addBool("mqtt_connected", m_mqttManager ? m_mqttManager->isConnected() : false);
   status.addNumber("mqtt_error_code", m_mqttManager ? static_cast<uint8_t>(m_mqttManager->getLastErrorCode()) : 0);
