@@ -193,8 +193,8 @@ private:
   // Member Variables
   // ------------------------------------------------------------------------
 
-  uint8_t m_lastLockState{1}; // 1 = LOCKED, 0 = UNLOCKED
-  AppEventLoop::Subscription m_lockStateSub;
+   uint8_t m_lastLockState{1};
+  AppEventLoop::SubscriptionHandle m_lockStateSub;
 
   // HTTP Server
   httpd_handle_t m_server;
