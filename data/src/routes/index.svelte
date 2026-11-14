@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 
 	let busyAction = $state(null);
-	let lockState = $state(null); // 'unlock' | 'lock' | null
+	let lockState = $state(null);
 
 	async function sendLockAction(action) {
 		if (busyAction) return;
@@ -40,34 +40,26 @@
 	<div class="card-body p-4">
 		<div class="flex items-center justify-between">
 			<h2 class="card-title text-base">Управление замком</h2>
-			{#if lockState === 'unlock'}
-				<span class="badge badge-success badge-sm">Открыт</span>
-			{:else if lockState === 'lock'}
-				<span class="badge badge-error badge-sm">Закрыт</span>
-			{/if}
+			<span class="text-sm font-medium">
+				{lockState === 'unlock' ? 'Открыт' : lockState === 'lock' ? 'Закрыт' : ''}
+			</span>
 		</div>
 
-		<div class="grid grid-cols-2 gap-3 mt-2">
+		<div class="flex gap-3 mt-2">
 			<button
-				class="btn btn-success {lockState && lockState !== 'unlock' ? 'btn-outline' : ''}"
+				class="btn btn-success flex-1"
 				disabled={busyAction !== null}
 				onclick={() => sendLockAction('unlock')}
 			>
-				{#if busyAction === 'unlock'}
-					<span class="loading loading-spinner loading-xs"></span>
-				{/if}
-				{lockState === 'unlock' ? '✓ Открыто' : 'Открыть'}
+				{busyAction === 'unlock' ? '...' : lockState === 'unlock' ? '✓ Открыто' : 'Открыть'}
 			</button>
 
 			<button
-				class="btn btn-error {lockState && lockState !== 'lock' ? 'btn-outline' : ''}"
+				class="btn btn-error flex-1"
 				disabled={busyAction !== null}
 				onclick={() => sendLockAction('lock')}
 			>
-				{#if busyAction === 'lock'}
-					<span class="loading loading-spinner loading-xs"></span>
-				{/if}
-				{lockState === 'lock' ? '✓ Закрыто' : 'Закрыть'}
+				{busyAction === 'lock' ? '...' : lockState === 'lock' ? '✓ Закрыто' : 'Закрыть'}
 			</button>
 		</div>
 	</div>
