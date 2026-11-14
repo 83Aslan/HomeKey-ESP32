@@ -11,6 +11,7 @@
 #include <atomic>
 #include <string>
 #include <vector>
+#include "app_event_loop.hpp"
 
 // Forward declarations
 class ConfigManager;
@@ -191,6 +192,9 @@ private:
   // ------------------------------------------------------------------------
   // Member Variables
   // ------------------------------------------------------------------------
+
+  uint8_t m_lastLockState{1}; // 1 = LOCKED, 0 = UNLOCKED
+  AppEventLoop::Subscription m_lockStateSub;
 
   // HTTP Server
   httpd_handle_t m_server;
