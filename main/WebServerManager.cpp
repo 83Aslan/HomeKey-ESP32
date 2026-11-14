@@ -373,7 +373,7 @@ void WebServerManager::end() {
   ESP_LOGI(TAG, "Ending WebServerManager...");
 
   if(!m_isInitialized) return;
-
+  m_lockStateSub.reset();
   if (m_server) {
     httpd_ssl_stop(m_server);
     ESP_LOGI(TAG, "HTTP Server stopped!");
