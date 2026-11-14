@@ -503,12 +503,12 @@ void WebServerManager::setupRoutes() {
       {"/reset_hk_pair", HTTP_GET, handleHKReset, this},
       {"/reset_wifi_cred", HTTP_GET, handleWifiReset, this},
       {"/start_config_ap", HTTP_GET, handleStartConfigAP, this},
+           // Action endpoints
+      {"/lock_control", HTTP_POST, handleLockControl, this},
+
       // WebSocket
       {"/ws", HTTP_GET, handleWebSocket, this, true},
 
-   // WebSocket
-      {"/ws", HTTP_GET, handleWebSocket, this, true},
-  
       // OTA endpoints
       {"/ota/*", HTTP_POST, handleOTAUpload, this},
 
@@ -542,6 +542,41 @@ void WebServerManager::setupRoutes() {
 // ============================================================================
 // Captive Portal Route Setup
 // ============================================================================
+
+esp_err_t WebServerManager::handleLockControl(httpd_req_t *req) {
+  WebServerManager *instance = getInstance(req);
+  if (instance && !instance->basicAuth(req)) {
+    return sendAuthFailure(req);
+  }
+
+  std::array<char, 64> query{};
+  std::array<char, 16> action{};
+  if (httpd_req_get_url_query_str(req, query.data(), query.size()) != ESP_OK ||
+      httpd_query_key_value(query.data(), "action", action.data(), action.size()) != ESP_OK) {
+    return sendJsonError(req, "Missing action");
+  }
+
+  uint8_t target = 1;
+  if (strcmp(action.data(), "unlock") == 0) {
+    target = 0;
+  } else if (strcmp(action.data(), "lock") == 0) {
+    target = 1;
+  } else {
+    return sendJsonError(req, "Invalid action");
+  }
+
+  EventLockState s{};
+  s.targetState = target;
+  s.source = 1;
+  std::array<uint8_t, sizeof(EventLockState)> d{};
+  size_t d_len = alpaca::serialize(s, d);
+  AppEventLoop::publish(LOCK_EVENT, LOCK_TARGET_STATE_CHANGED, d.data(), d_len);
+
+  httpd_resp_set_type(req, "application/json");
+  httpd_resp_sendstr(req, "{\"success\":true}");
+  return ESP_OK;
+}
+
 
 void WebServerManager::setupCaptivePortalRoutes() {
   ESP_LOGI(TAG, "Setting up captive portal routes...");
