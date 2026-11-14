@@ -1,9 +1,10 @@
 <script>
 	import HKInfo from '$lib/components/HKInfo.svelte';
 	import { route } from 'sv-router/generated';
+	import { onMount } from 'svelte';
 
-	let busyAction = $state(null); // 'unlock' | 'lock' | null
-	let lockState = $state(null);  // 'unlock' | 'lock' | null
+	let busyAction = $state(null);
+	let lockState = $state(null); // 'unlock' | 'lock' | null
 
 	async function sendLockAction(action) {
 		if (busyAction) return;
@@ -19,6 +20,20 @@
 			busyAction = null;
 		}
 	}
+
+	onMount(() => {
+		const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+		const ws = new WebSocket(`${proto}//${location.host}/ws`);
+		ws.onmessage = (event) => {
+			try {
+				const msg = JSON.parse(event.data);
+				if (msg.type === 'metrics' && typeof msg.lock_state === 'number') {
+					lockState = msg.lock_state === 0 ? 'unlock' : 'lock';
+				}
+			} catch {}
+		};
+		return () => ws.close();
+	});
 </script>
 
 <div class="card bg-base-200 shadow-sm border border-base-300 mb-4">
