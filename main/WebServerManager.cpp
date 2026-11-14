@@ -348,6 +348,18 @@ BaseType_t task;
 
   ESP_LOGI(TAG, "Web server initialization complete");
 
+  m_lockStateSub = AppEventLoop::subscribe(LOCK_EVENT, LOCK_STATE_CHANGED, [this](const uint8_t* data, size_t size) {
+  if (size == 0 || data == nullptr) return;
+  std::span<const uint8_t> payload(data, size);
+  std::error_code ec;
+  EventLockState s = alpaca::deserialize<EventLockState>(payload, ec);
+  if (!ec) {
+    m_lastLockState = s.currentState;
+    std::string metrics = getDeviceMetrics();
+    broadcastWs((const uint8_t*)metrics.c_str(), metrics.size(), HTTPD_WS_TYPE_TEXT);
+  }
+});
+
   m_isInitialized = true;
 }
 
